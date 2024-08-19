@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div style="
+        background: green; 
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        display: -webkit-box; 
+        display: -moz-box;
+        display: -ms-flexbox;
+        display: -webkit-flex;
+        justify-content: center;
+        align-items: center;
+        ">
+        <div id="chat-container" style="
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    display: -webkit-box; 
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+    width: 100%;
+    max-width: 500px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+    ">
+        <div id="chat-box" style="
+            height: 200px;
+            overflow-y: scroll;
+            border: 1px solid #ddd;
+            padding: 5px;
+            margin-bottom: 10px;
+            width: 100%;
+            background-color: #F5F7F8;
+
+            border-radius: 5px;
+            margin-bottom: 10px;
+
+        "></div>
+        <input type="text" id="user-input" placeholder="Écrivez votre question..." style="
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            
+            border-radius: 5px;
+            margin-bottom: 10px;
+
+            overflow: hidden;
+        ">
+        <button onclick="sendMessage()" style="
+        border-radius: 10px;
+        background-color: #F2940A;
+        color: #FFF;
+        padding: 0.5rem 1rem;
+        border: none;
+        box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.4);
+        -webkit-box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.4);
+        -moz-box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.4);
+        ">Envoyer</button>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const userInput = document.getElementById('user-input').value;
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<div><strong>Vous:</strong> ${userInput}</div>`;
+            
+            const response = await getChatGPTResponse(userInput);
+            chatBox.innerHTML += `<div><strong>ChatGPT:</strong> ${response}</div>`;
+            
+            // Scroller jusqu'au bas du chat
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function getChatGPTResponse(prompt) {
+            const apiKey = 'VOTRE_CLE_API';
+            const apiUrl = 'https://api.openai.com/v1/chat/completions';
+            
+            try {
+                const response = await axios.post(apiUrl, {
+                    model: "gpt-4",
+                    messages: [{role: "user", content: prompt}]
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                return response.data.choices[0].message.content;
+            } catch (error) {
+                console.error("Erreur lors de l'appel à l'API ChatGPT :", error);
+                return "Désolé, une erreur s'est produite.";
+            }
+        }
+    </script>
+    </div>
+</body>
+</html>
