@@ -70,12 +70,12 @@
         box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.4);
         -webkit-box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.4);
         -moz-box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.4);
+        cursor: pointer;
         ">Envoyer</button>
     </div>
 
     <script>
         
-        const test = test => console.log(test);
         async function sendMessage() {
             const userMessageInput = document.getElementById('userMessageInput').value;
             const chatBox = document.getElementById('chatMessageInput');
@@ -84,44 +84,54 @@
             const response = await getChatGPTResponse(userMessageInput);
             chatBox.innerHTML += `<div><strong>ChatGPT:</strong> ${response}</div>`;
             
-            // Scroller jusqu'au bas du chat
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
+        const refreshUserInput = () => document.getElementById('userMessageInput').value = "";
+
         async function getChatGPTResponse(prompt) {
-            const apiUrl = 'https://172.16.16.82:443/chatGPT';
+            const apiUrl = 'http://localhost:3000/chatGPT';
+
+            const requestBody = JSON.stringify({
+                context: "Tu es un expert du logiciel ELO...",
+                message: prompt,
+                conversation: []
+            });
+
+            const headers =  {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST,PATCH,OPTIONS'
+            };
+
+            console.log("Request Body:", requestBody);
 
             try {
-                const responsePromise = await fetch(apiUrl, {
+                const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: [{role: "user", content: prompt}],
-                        context: "Tu es un expert du logiciel ELO, tu vas aider les utilisateurs du logiciel ELO lors de l'utilisation du logiciel. Tu seras bienveillant. Tu vas leur indiquer comment faire ce qu'il te demande avec le logiciel ELO. Tu ne dois pas répondre à  d'autres questions, quel que soit le sujet.",
-                        conversation: []
-                    })
-                })
-                .then(response => {
-                    console.log('Response from server:', response);
-                    return response.choices[0].message.content;                    
-                })
-                .catch(error => console.error('Error to fetch data:', error));
+                    mode: "cors",
+                    cache: "no-cache",
+                    headers: headers,
+                    body: requestBody 
+                });
 
-                if (!responsePromise.ok) {
-                    throw new Error(`Response status: ${responsePromise.status}`);
-                }else{
-                    const jsonData = await responsePromise.json();
-                    console.log('jsonData', jsonData)
-                    return jsonData;
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`Erreur HTTP ${response.status}: ${errorText}`);
+                    throw new Error(`Response status: ${response.status}`);
                 }
 
+                const jsonData = await response.json();
+                console.log('jsonData', jsonData);
+
+                return jsonData.message[1].content || "Aucune réponse reçue.";
+                
             } catch (error) {
                 console.error("Erreur lors de l'appel à l'API ChatGPT :", error);
                 return "Désolé, une erreur s'est produite.";
             }
         }
+
     </script>
     </div>
 </body>
