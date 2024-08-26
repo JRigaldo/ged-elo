@@ -7,11 +7,13 @@
 </head>
 <body>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
         .section{
             background: #FFF; 
             width: 100%;
             height: 100%;
+            min-height: 800px;
             display: flex;
             display: -webkit-box; 
             display: -moz-box;
@@ -20,16 +22,16 @@
             justify-content: center;
             align-items: center;
 
-            font-family: "Roboto Mono", monospace;
+            font-family: "Open Sans", sans-serif;
             font-optical-sizing: auto;
             font-weight: normal;
             font-style: normal;
 
-            font-size: 12px;
+            font-size: 15px;
         }
 
         .chat-title{
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 700;
             margin-bottom: 10px;
         }
@@ -37,7 +39,7 @@
         .chat-description{
             text-align: center;
             font-weight: 700;
-            font-size: 0.8rem;
+            font-size: 1rem;
             margin-bottom: 35px;
         }
 
@@ -55,7 +57,7 @@
             flex-direction: column;
 
             width: 100%;
-            max-width: 500px;
+            max-width: 700px;
 
             overflow-y: auto;
             overflow-x: hidden;
@@ -123,6 +125,7 @@
         .bubble{
             padding: 6px;
             border-radius: 5px;
+            line-height: 1.3rem;
         }
 
         .bubble-left{
@@ -133,6 +136,7 @@
             margin-top: 20px;
             display: inline-block;
             text-align: left;
+            width: auto;
         }
 
         .bubble-left:first-child{
@@ -142,7 +146,7 @@
         .bubble-right{
             align-self: flex-end;
             background-color: #E0E0E0;
-            text-align: right;
+            text-align: left;
             max-width: 80%;
         }
 
@@ -151,16 +155,30 @@
             right: 2px;
             top: 1px;
         }
+
+        .spinner{
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50%);
+            z-index: 100;
+            width: 50px;
+            height: 50px;
+            
+        }
     </style>
     <div 
         class="section">
         <div class="chat-container">
-        <h3 class="chat-title">Assistant ELO</h3>
-        <p class="chat-description">Veuillez écrire vos questions à notre assistant.</p>
+        <h3 class="chat-title">Votre assisant ELO basé sur l'IA</h3>
+        <p class="chat-description">Veuillez écrire vos questions à l'assistant dans le champ ci-dessous.</p>
         <div id="chatMessageInput" class="chat-input">
-            <div class="bubble bubble-left"><strong>ChatGPT:</strong> Bonjour, posez-moi n'importe quelle question sur ELO et j'y répondrai avec plaisir !</div>
+            <div class="bubble bubble-left"><strong>ELO IA:</strong> Bonjour, posez-moi n'importe quelle question sur l'utilisation du logiciel ELO et j'y répondrai avec plaisir !</div>
         </div>
-        
+        <span id="awaiting" class="spinner" style="display:none">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle fill="#F2940A" stroke="#F2940A" stroke-width="15" r="15" cx="40" cy="65"><animate attributeName="cy" calcMode="spline" dur="2" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4"></animate></circle><circle fill="#F2940A" stroke="#F2940A" stroke-width="15" r="15" cx="100" cy="65"><animate attributeName="cy" calcMode="spline" dur="2" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2"></animate></circle><circle fill="#F2940A" stroke="#F2940A" stroke-width="15" r="15" cx="160" cy="65"><animate attributeName="cy" calcMode="spline" dur="2" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0"></animate></circle></svg>
+        </span>
         <textarea type="text" id="userMessageInput" placeholder="Écrivez votre question..." class="user-input"></textarea>
         <button onclick="sendMessage()" class="submit-api">
             <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M120-160v-640l760 320-760 320Zm80-120 474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z"/></svg>
@@ -181,13 +199,13 @@
             userInput.value = "";
             
             const response = await getChatGPTResponse(userMessageInput);
-            chatBox.innerHTML += `<div class="bubble bubble-left"><strong>ChatGPT:</strong> ${response}</div>`;
+            chatBox.innerHTML += `<div class="bubble bubble-left"><strong>ELO IA:</strong> ${response}</div>`;
             
             chatBox.scrollTop = chatBox.scrollHeight;
         } 
 
         async function getChatGPTResponse(prompt) {
-            const apiUrl = 'http://localhost:3000/chatGPT';
+            const apiUrl = 'https://elo.protocol.ch:3000/chatGPT';
 
             const requestBody = JSON.stringify({
                 context: "Tu es un expert du logiciel ELO...",
@@ -199,8 +217,8 @@
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST,PATCH,OPTIONS'
             };
-
-            console.log("Request Body:", requestBody);
+            
+            ShowAwaiting();
 
             try {
                 const response = await fetch(apiUrl, {
@@ -218,13 +236,44 @@
                 }
 
                 const jsonData = await response.json();
-                console.log('jsonData', jsonData);
-
+            
                 return jsonData.message[1].content || "Aucune réponse reçue.";
                 
             } catch (error) {
                 console.error("Erreur lors de l'appel à l'API ChatGPT :", error);
                 return "Désolé, une erreur s'est produite.";
+            } finally {
+                HideAwaiting();
+            }
+        }
+
+        var globalAwaitingCounter = 0;
+
+        // Show wait icon
+        function ShowAwaiting()
+        {
+            if(globalAwaitingCounter <= 0)
+            {
+                document.getElementById("awaiting").style.display = "inline";
+                globalAwaitingCounter = 1;
+            }
+            else
+            {
+                globalAwaitingCounter++;
+            }
+        }
+
+        // Hide wait icon
+        function HideAwaiting()
+        {
+            if(globalAwaitingCounter <= 1)
+            {
+                document.getElementById("awaiting").style.display = "none";
+                globalAwaitingCounter = 0;
+            }
+            else
+            {
+                globalAwaitingCounter--;
             }
         }
 
