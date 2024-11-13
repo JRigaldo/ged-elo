@@ -110,8 +110,8 @@
             position: absolute;
             right: 0;
             bottom: 0;
-            width: 48px;
-            height: 48px;
+            width: 50px;
+            height: 56px;
             border-radius: 10px;
             background-color: #F2940A;
             color: #FFF;
@@ -127,6 +127,7 @@
             box-shadow: 0px 0px 5px 2px rgba(0,0,0,0.2);
             -webkit-box-shadow: 0px 0px 5px 2px rgba(0,0,0,0.2);
             -moz-box-shadow: 0px 0px50px 2px rgba(0,0,0,0.2);
+            background-color: #c37708;
         }
 
         .bubble{
@@ -155,6 +156,7 @@
             background-color: #E0E0E0;
             text-align: left;
             max-width: 80%;
+            margin-top: 5px;
         }
 
         .btn-svg{
@@ -174,115 +176,192 @@
             height: 50px;
             
         }
+
+        .auto-resize-textarea {
+            overflow: hidden;
+            resize: none;
+        }
     </style>
     <div 
         class="section">
         <div class="chat-container">
-        <h3 class="chat-title">Votre assisant ELO basé sur l'IA</h3>
-        <p class="chat-description">Veuillez écrire vos questions à l'assistant dans le champ ci-dessous.</p>
-        <div id="chatMessageInput" class="chat-input">
-            <div class="bubble bubble-left"><strong>ELO IA:</strong> Bonjour, posez-moi n'importe quelle question sur l'utilisation du logiciel ELO et j'y répondrai avec plaisir !</div>
+            <h3 class="chat-title">Votre assisant ELO basé sur l'IA</h3>
+            <p class="chat-description">Veuillez écrire vos questions à l'assistant dans le champ ci-dessous.</p>
+            <div id="chatMessageInput" class="chat-input">
+                <div class="bubble bubble-left"><strong>ELO IA:</strong> Bonjour, posez-moi n'importe quelle question sur l'utilisation du logiciel ELO et j'y répondrai avec plaisir !</div>
+            </div>
+            <span id="awaiting" class="spinner" style="display:none">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle fill="#F2940A" stroke="#F2940A" stroke-width="15" r="15" cx="40" cy="65"><animate attributeName="cy" calcMode="spline" dur="2" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4"></animate></circle><circle fill="#F2940A" stroke="#F2940A" stroke-width="15" r="15" cx="100" cy="65"><animate attributeName="cy" calcMode="spline" dur="2" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2"></animate></circle><circle fill="#F2940A" stroke="#F2940A" stroke-width="15" r="15" cx="160" cy="65"><animate attributeName="cy" calcMode="spline" dur="2" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0"></animate></circle></svg>
+            </span>
+            <textarea type="text" id="userMessageInput" placeholder="Écrivez votre question..." class="user-input auto-resize-textarea"></textarea>
+            <button onclick="sendMessage()" class="submit-api" type="submit">
+                <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M120-160v-640l760 320-760 320Zm80-120 474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z"/></svg>
+            </button>
         </div>
-        <span id="awaiting" class="spinner" style="display:none">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle fill="#F2940A" stroke="#F2940A" stroke-width="15" r="15" cx="40" cy="65"><animate attributeName="cy" calcMode="spline" dur="2" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4"></animate></circle><circle fill="#F2940A" stroke="#F2940A" stroke-width="15" r="15" cx="100" cy="65"><animate attributeName="cy" calcMode="spline" dur="2" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2"></animate></circle><circle fill="#F2940A" stroke="#F2940A" stroke-width="15" r="15" cx="160" cy="65"><animate attributeName="cy" calcMode="spline" dur="2" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0"></animate></circle></svg>
-        </span>
-        <textarea type="text" id="userMessageInput" placeholder="Écrivez votre question..." class="user-input"></textarea>
-        <button onclick="sendMessage()" class="submit-api">
-            <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M120-160v-640l760 320-760 320Zm80-120 474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z"/></svg>
-        </button>
-    </div>
-
+    <script src="node_modules/markdown/lib/markdown.js"></script>
     <script>
-        
-        async function sendMessage() {
-            const userInput = document.getElementById('userMessageInput');
-            const userMessageInput = userInput.value;
-            const chatBox = document.getElementById('chatMessageInput');
 
-            chatBox.innerHTML += `<div class="bubble bubble-right"><strong>Vous:</strong> ${userMessageInput}</div>`;
+            const textarea = document.getElementById('userMessageInput');
 
-            chatBox.scrollTop = chatBox.scrollHeight;
+            // Fonction pour ajuster la hauteur en fonction du contenu
+            function autoResize() {
+                textarea.style.height = 'auto'; // Réinitialiser la hauteur
+                textarea.style.height = textarea.scrollHeight + 'px'; // Ajuster en fonction du contenu
+            }
 
-            userInput.value = "";
-            
-            const response = await getChatGPTResponse(userMessageInput);
-            chatBox.innerHTML += `<div class="bubble bubble-left"><strong>ELO IA:</strong> ${response}</div>`;
-            
-            chatBox.scrollTop = chatBox.scrollHeight;
-        } 
+            // Ajouter l'événement `input` pour déclencher l'ajustement lors de la saisie
+            textarea.addEventListener('input', autoResize);
 
-        async function getChatGPTResponse(prompt) {
-            const apiUrl = 'https://elo.protocol.ch:3000/chatGPT';
+            // Appeler autoResize une première fois au chargement pour ajuster si le texte est pré-rempli
+            autoResize();
 
-            const requestBody = JSON.stringify({
-                context: "Tu es un expert du logiciel ELO...",
-                message: prompt
-            });
+            function cleanTextarea() {
+                // Vérifie si le champ contient uniquement des espaces ou des retours à la ligne
+                if (/^\s*$/.test(textarea.value)) {
+                    textarea.value = ""; // Vider le textarea
+                }
+            }
 
-            const headers =  {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST,PATCH,OPTIONS'
-            };
-            
-            ShowAwaiting();
+            function keySubmitform(event) {
+                
+                if (event.ctrlKey && event.key === "Enter") {
+                    // Ajoute un retour à la ligne si Ctrl + Enter est pressé
+                    event.preventDefault();
+                    textarea.value += "\n";
+                    
+                } else if (event.key === "Enter") {
+                    // Empêche l'envoi si le champ est vide après nettoyage
+                    cleanTextarea();
+                    if (textarea.value === "") {
+                        console.log('Le champ est vide, envoi annulé');
+                        event.preventDefault();
+                        return;
+                    }
+                    event.preventDefault();
+                    sendMessage();
+                }
+            }
 
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    mode: "cors",
-                    cache: "no-cache",
-                    headers: headers,
-                    body: requestBody 
-                });
+            // Ajouter les événements pour nettoyer et soumettre le formulaire
+            textarea.addEventListener("keydown", keySubmitform);
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error(`Erreur HTTP ${response.status}: ${errorText}`);
-                    throw new Error(`Response status: ${response.status}`);
+    
+            async function sendMessage() {
+                const userInput = document.getElementById('userMessageInput');
+                const chatBox = document.getElementById('chatMessageInput');
+
+                let userMessageInput;
+
+                if (/^\s*$/.test(textarea.value)) {
+                    return;
                 }
 
-                const jsonData = await response.json();
-            
-                return jsonData.message[1].content || "Aucune réponse reçue.";
+                if(userInput !== ''){
+                    userMessageInput = userInput.value;
+                    textarea.style.height = 'auto';
+                }
                 
-            } catch (error) {
-                console.error("Erreur lors de l'appel à l'API ChatGPT :", error);
-                return "Désolé, une erreur s'est produite.";
-            } finally {
-                HideAwaiting();
-            }
-        }
+                chatBox.innerHTML += `<div class="bubble bubble-right"><strong>Vous:</strong> ${userMessageInput}</div>`;
 
-        var globalAwaitingCounter = 0;
+                chatBox.scrollTop = chatBox.scrollHeight;
+                const previousScrollTop = chatBox.scrollTop;
 
-        // Show wait icon
-        function ShowAwaiting()
-        {
-            if(globalAwaitingCounter <= 0)
-            {
-                document.getElementById("awaiting").style.display = "inline";
-                globalAwaitingCounter = 1;
-            }
-            else
-            {
-                globalAwaitingCounter++;
-            }
-        }
+                userInput.value = "";
+                
+                const response = await getChatGPTResponse(userMessageInput);
 
-        // Hide wait icon
-        function HideAwaiting()
-        {
-            if(globalAwaitingCounter <= 1)
-            {
-                document.getElementById("awaiting").style.display = "none";
-                globalAwaitingCounter = 0;
+                const formattedResponse = markdown.toHTML(response);
+        
+                chatBox.innerHTML += `<div class="bubble bubble-left"><strong>ELO IA:</strong> ${formattedResponse}</div>`;
+                
+                // chatBox.scrollTop = previousScrollTop;
+                // chatBox.scrollTop = chatBox.scrollHeight;
+
+                const distanceFromBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight;
+
+                // Si la distance est supérieure à 100 pixels, ajouter quelques pixels de défilement
+                if (distanceFromBottom > 100) {
+                    chatBox.scrollTop += 250; // Ajustez la valeur (20px) pour contrôler l'ajustement du défilement
+                } else {
+                    // Si la distance est inférieure ou égale à 100px, scroll automatiquement en bas
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            } 
+
+            async function getChatGPTResponse(prompt) {
+                const apiUrl = 'https://elo.protocol.ch:3000/chatGPT';
+
+                const requestBody = JSON.stringify({
+                    context: "Tu es un expert du logiciel ELO...",
+                    message: prompt
+                });
+
+                const headers =  {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'POST,PATCH,OPTIONS'
+                };
+                
+                ShowAwaiting();
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        mode: "cors",
+                        cache: "no-cache",
+                        headers: headers,
+                        body: requestBody 
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`Erreur HTTP ${response.status}: ${errorText}`);
+                        throw new Error(`Response status: ${response.status}`);
+                    }
+
+                    const jsonData = await response.json();
+                
+                    return jsonData.message[1].content || "Aucune réponse reçue.";
+                    
+                } catch (error) {
+                    console.error("Erreur lors de l'appel à l'API ChatGPT :", error);
+                    return "Désolé, une erreur s'est produite.";
+                } finally {
+                    HideAwaiting();
+                }
             }
-            else
+
+            var globalAwaitingCounter = 0;
+
+            // Show wait icon
+            function ShowAwaiting()
             {
-                globalAwaitingCounter--;
+                if(globalAwaitingCounter <= 0)
+                {
+                    document.getElementById("awaiting").style.display = "inline";
+                    globalAwaitingCounter = 1;
+                }
+                else
+                {
+                    globalAwaitingCounter++;
+                }
             }
-        }
+
+            // Hide wait icon
+            function HideAwaiting()
+            {
+                if(globalAwaitingCounter <= 1)
+                {
+                    document.getElementById("awaiting").style.display = "none";
+                    globalAwaitingCounter = 0;
+                }
+                else
+                {
+                    globalAwaitingCounter--;
+                }
+            }
+            
+        
 
     </script>
     </div>
